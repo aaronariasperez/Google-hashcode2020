@@ -17,7 +17,6 @@
 
 import sys
 import os.path
-from os import path
 import math
 import random
 
@@ -25,9 +24,11 @@ def assert_input():
      if len(sys.argv) < 2:
         print("Script arguments are chungos. Usage: $ python3 script.py inputnamefile.txt")
         exit()
-     
-     if not path.exists(sys.argv[1]):
-        print("Input file está mas duro que su puta madre, vamos que no existe.")
+     if not os.path.exists(sys.argv[1]):
+        print(sys.argv[1], "no existe ompare, no me la cuelas")
+        exit()   
+     if not os.path.isfile(sys.argv[1]):
+        print(sys.argv[1], "está ma duro que zu puta madre... pa mi que ezo no es un fichero")
         exit()
 
 def write_output(dicc, best_solution):
@@ -102,13 +103,22 @@ def evaluate_solution(individual, daysOfScanning, dicc, libraries):
     acum = 0
 
     matrix = [[0] * daysOfScanning] * len(individual)
+    print("dim:", len(matrix))
+    print("len:", len(matrix[0]))
 
     signing = 1234
     ind_pointer = 0
     day_pointer = 0
     for i in range(daysOfScanning):
+        #print("'{} {}'".format(signing, type(signing)))
         if signing > 0:
             for j in range(len(matrix)):
+                if day_pointer >= len(matrix[j]):
+                    print("day_pointer:", day_pointer)
+                    print("dim:", len(matrix))
+                    print("len:", len(matrix[j]))
+                    print("j:", j)
+                    print("daysOfScanning:", daysOfScanning)
                 acum += matrix[j][day_pointer]
             signing -= 1
 
@@ -118,7 +128,9 @@ def evaluate_solution(individual, daysOfScanning, dicc, libraries):
 
             aux_books = dicc[individual[ind_pointer]]
             signing = libraries[individual[ind_pointer]].get_signup()
+            # if len(aux_books) <= (daysOfScanning-day_pointer):
             matrix[ind_pointer][day_pointer:daysOfScanning-1] = aux_books[0:daysOfScanning-day_pointer]
+            # else: rellenar de ceros
             ind_pointer += 1
         day_pointer += 1
 
@@ -134,7 +146,13 @@ def simulatedAnnealing(_X, daysOfScanning, dicc, libraries):
 
     while T > T_end:
         new = generate_neighbour(current.copy(), dicc)
-
+        
+        for library in libraries:
+            if isinstance(library.get_signup(), str):
+                print("Books:", library.get_books())
+                print("Signup:", library.get_signup())
+                print("PerDay:", library.get_perDay())
+            
         delta = evaluate_solution(new, daysOfScanning, dicc, libraries) - evaluate_solution(current, daysOfScanning, dicc, libraries)
 
         if delta >= 0:
@@ -152,6 +170,7 @@ def simulatedAnnealing(_X, daysOfScanning, dicc, libraries):
 assert_input()
 
 file = open(sys.argv[1], "r")
+
 numBooks, numLibraries, daysOfScanning = file.readline().split()
 numBooks = int(numBooks)
 numLibraries = int(numLibraries)
@@ -160,20 +179,22 @@ daysOfScanning = int(daysOfScanning)
 scores = file.readline().split()
 scores = list(map(int, scores))
 
-aux_file = file.readlines()
-
 libraries = []
-i = 0
-params_aux = []
-for l in aux_file:
-    if i==0:
-        params_aux = l.split()
-        i += 1
-    elif i==1:
-        aux = l.split()
-        lib = Library(aux, params_aux[1], params_aux[2])
-        libraries.append(lib)
-        i = 0
+
+for i_library in range(numLibraries):
+    libNumBooks, signupDelay, shipCapacity = file.readline().split()
+    libNumBooks = int(libNumBooks)
+    signupDelay = int(signupDelay)
+    shipCapacity = int(shipCapacity)
+    books = file.readline().split()
+    books = list(map(int, books))
+    
+    #print("numbooks:", libNumBooks)
+    #print("signup:", signupDelay)
+    #print("capacity:", shipCapacity)
+    #print("books:", books)
+    
+    libraries.append(Library(books, signupDelay, shipCapacity))
 
 
 dicc = generate_library(libraries, numBooks, numLibraries, daysOfScanning)
