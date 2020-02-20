@@ -1,14 +1,27 @@
+import sys
+import os.path
+from os import path
 import math
 import random
 
-def write_output(libraries, orderedlibs):
+def assert_input():
+     if len(sys.argv) < 2:
+        print("Script arguments are chungos. Usage: $ python3 script.py inputnamefile.txt")
+        exit()
+     
+     if not path.exists(sys.argv[1]):
+        print("Input file está mas duro que su puta madre, vamos que no existe.")
+        exit()
+
+def write_output(dicc, best_solution):
     
-    print(len(libraries))
+    print(len(dicc))
     
-    for ilibrary in orderedlibs:
-        library = libraries[ilibrary]
+    for ilibrary in best_solution:
+        library = dicc[ilibrary]
         print(ilibrary,len(library))
         print(*library)
+    
 
 class Library:
     def __init__(self, books, signup, perDay):
@@ -119,7 +132,9 @@ def simulatedAnnealing(_X, daysOfScanning, dicc, libraries):
 
     return best_found
 
-file = open("f_libraries_of_the_world.txt", "r")
+assert_input()
+
+file = open(sys.argv[1], "r")
 numBooks, numLibraries, daysOfScanning = file.readline().split()
 numBooks = int(numBooks)
 numLibraries = int(numLibraries)
