@@ -33,12 +33,12 @@ def assert_input():
 
 def write_output(dicc, best_solution):
     
-    print(len(dicc))
+    #print(len(dicc))
     
     for ilibrary in best_solution:
         library = dicc[ilibrary]
-        print(ilibrary,len(library))
-        print(*library)
+        #print(ilibrary,len(library))
+        #print(*library)
     
 
 class Library:
@@ -78,17 +78,26 @@ def generate_random(libraries, numBooks, numLibraries, daysOfScanning):
 def cooling(T):
     return 0.95*T
 
-def generate_neighbour(individual, dicc):
+def swap(array, tupla):
+    aux = array[tupla[0]]
+    array[tupla[0]] = array[tupla[1]]
+    array[tupla[1]] = aux
+
+def random_tuple(maximum):
+    a = 0
+    b = 0
+    while a==b:
+        a = random.randint(0, maximum)
+        b = random.randint(0, maximum)
+
+    return (a,b)    
+
+def generate_neighbour(individual, dicc, prob_temp):
     p = random.random() 
     if p < 0.2:
-        a = 0
-        b = 0
-        while a==b:
-            a = random.randint(0, len(individual)-1)
-            b = random.randint(0, len(individual)-1)
-        aux_l = individual[a]
-        individual[a] = individual[b]
-        individual[b] = aux_l
+
+        #for n in noseke:
+        swap(individual, random_tuple(len(individual)-1))
 
     else:
         selected = random.randint(0, len(individual)-1)
@@ -128,6 +137,7 @@ def evaluate_solution(individual, daysOfScanning, dicc, libraries):
     return acum
 
 def simulatedAnnealing(_X, daysOfScanning, dicc, libraries):
+    T_max = 1000.0
     T = 1000.0
     T_end = 0.01
 
@@ -135,15 +145,16 @@ def simulatedAnnealing(_X, daysOfScanning, dicc, libraries):
     best_found = _X
 
     while T > T_end:
-        new = generate_neighbour(current.copy(), dicc)
+        new = generate_neighbour(current.copy(), dicc.copy(), 0)
             
         delta = evaluate_solution(new, daysOfScanning, dicc, libraries) - evaluate_solution(current, daysOfScanning, dicc, libraries)
-
+        print(delta)
         if delta >= 0:
             current = new.copy()
             best_found = current.copy()
         else:
             prob = math.exp(delta/T)
+            print(prob)
             if prob > random.random():
                 current = new.copy()
 
