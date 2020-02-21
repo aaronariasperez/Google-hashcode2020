@@ -31,49 +31,34 @@ def assert_input():
         print(sys.argv[1], "está ma duro que zu puta madre... pa mi que ezo no es un fichero")
         exit()
 
-def write_output(dicc, best_solution):
+def write_output(libraries):
     
-    #print(len(dicc))
+    print(len(libraries))
     
-    for ilibrary in best_solution:
-        library = dicc[ilibrary]
-        #print(ilibrary,len(library))
-        #print(*library)
-    
+    for library in libraries:
+        books = library.books
+        print(library.get_id(),len(books))
+        print(*books)
 
 class Library:
-    def __init__(self, books, signup, perDay):
+    def __init__(self, num, books, signup, perDay):
+        self.num = num
         self.books = books
         self.signup = signup
         self.perDay = perDay
+    def get_id(self):
+        return self.num
     def get_books(self):
-        return self.books
+        return self.books.copy()
     def get_signup(self):
         return self.signup
     def get_perDay(self):
         return self.perDay
 
-
-def generate_library(libraries, numBooks, numLibraries, daysOfScanning):
-    dicc = {}
-    i=0
-    for l in libraries:
-        dicc[i] = l.get_books()
-        i += 1
-
-    return dicc
-
-def generate_random(libraries, numBooks, numLibraries, daysOfScanning):
-    individual = []
-    for i in range(numLibraries):
-        individual.append(i)
-
-    random.shuffle(individual)
-
-    for lib in libraries:
-        random.shuffle(lib.books)
-
-    return individual
+def shuffle_all(libraries):
+    random.shuffle(libraries)
+    for library in libraries:
+        random.shuffle(library.books)
 
 def cooling(T):
     return 0.95*T
@@ -92,69 +77,53 @@ def random_tuple(maximum):
 
     return (a,b)    
 
-def generate_neighbour(individual, dicc, prob_temp):
+def generate_neighbour(libraries, prob_temp):
     p = random.random() 
     if p < 0.2:
-
         #for n in noseke:
-        swap(individual, random_tuple(len(individual)-1))
-
+        swap(libraries, random_tuple(len(libraries)-1))
     else:
-        selected = random.randint(0, len(individual)-1)
-        a = 0
-        b = 0
-        while a==b:
-            a = random.randint(0, len(dicc[individual[selected]])-1)
-            b = random.randint(0, len(dicc[individual[selected]])-1)
-        aux_b = dicc[individual[selected]][a]
-        dicc[individual[selected]][a] = dicc[individual[selected]][b]
-        dicc[individual[selected]][b] = aux_b
+        #for n in noseke:
+        selected = random.randint(0, len(libraries)-1)
+        swap(libraries[selected].books, random_tuple(len(libraries[selected].books)-1))
+        
+    return libraries
 
-
-    return individual
-
-def evaluate_solution(individual, daysOfScanning, dicc, libraries):
+def evaluate_solution(libraries, daysOfScanning):
     acum = 0
-
-    matrix = [[0] * daysOfScanning] * len(individual)
-
     signing = 1234
     ind_pointer = 0
     day_pointer = 0
     for i in range(daysOfScanning):
         if signing > 0:
             signing -= 1
-
         else:
-            aux_books = dicc[individual[ind_pointer]]
-            signing = libraries[individual[ind_pointer]].get_signup()
-            acum += sum(aux_books[0:libraries[individual[ind_pointer]].get_perDay()*daysOfScanning-day_pointer])
+            signing = libraries[ind_pointer].get_signup()
+            acum += sum(libraries[ind_pointer].books[0:libraries[ind_pointer].get_perDay()*daysOfScanning-day_pointer])
             ind_pointer += 1
         day_pointer += 1
 
-    #acum = sum(sum(matrix,[]))
-
     return acum
 
-def simulatedAnnealing(_X, daysOfScanning, dicc, libraries):
+def simulatedAnnealing(libraries, daysOfScanning):
     T_max = 1000.0
     T = 1000.0
     T_end = 0.01
 
-    current = _X
-    best_found = _X
+    current = libraries
+    best_found = libraries
 
     while T > T_end:
-        new = generate_neighbour(current.copy(), dicc.copy(), 0)
+        new = generate_neighbour(libraries.copy(), 0)
             
-        delta = evaluate_solution(new, daysOfScanning, dicc, libraries) - evaluate_solution(current, daysOfScanning, dicc, libraries)
-        print(delta)
+        delta = evaluate_solution(new, daysOfScanning) - evaluate_solution(current, daysOfScanning)
+        #print(delta)
         if delta >= 0:
             current = new.copy()
             best_found = current.copy()
         else:
             prob = math.exp(delta/T)
-            print(prob)
+            #print(prob)
             if prob > random.random():
                 current = new.copy()
 
@@ -184,23 +153,15 @@ for i_library in range(numLibraries):
     books = file.readline().split()
     books = list(map(int, books))
     
+    # DEBUG
     #print("numbooks:", libNumBooks)
     #print("signup:", signupDelay)
     #print("capacity:", shipCapacity)
     #print("books:", books)
     
-    libraries.append(Library(books, signupDelay, shipCapacity))
+    libraries.append(Library(i_library, books, signupDelay, shipCapacity))
 
+shuffle_all(libraries)
+best_solution = simulatedAnnealing(libraries, daysOfScanning)
+write_output(best_solution)
 
-dicc = generate_library(libraries, numBooks, numLibraries, daysOfScanning)
-_X = generate_random(libraries, numBooks, numLibraries, daysOfScanning)
-best_solution = simulatedAnnealing(_X, daysOfScanning, dicc, libraries)
-
-#print("Best score: "+str(evaluate_solution(best_solution, items, portions)))
-
-write_output(dicc, best_solution)
-
-#file2 = open("solution.out", "w")
-#file2.write(str(sum(best_solution)))
-#file2.write("\n")
-#types_of_piz
