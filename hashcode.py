@@ -21,7 +21,7 @@ import math
 import random
 import copy
 
-def assert_input():
+def assertInput():
      if len(sys.argv) < 2:
         print("Script arguments are chungos. Usage: $ python3 script.py inputnamefile.txt")
         exit()
@@ -32,17 +32,12 @@ def assert_input():
         print(sys.argv[1], "está ma duro que zu puta madre... pa mi que ezo no es un fichero")
         exit()
 
-def print_libraries(libraries):
-    
+def printOutput(libraries):
     print(len(libraries))
-    
     for library in libraries:
         books = library.books
-        print(library.get_id(),len(books))
+        print(library.getId(),len(books))
         print(*books)
-        #for book in books:
-        #    print(book.get_id(), end=' ')
-        #print()
 
 class Library:
     def __init__(self, num, books, signup, perDay):
@@ -50,13 +45,13 @@ class Library:
         self.books = books
         self.signup = signup
         self.perDay = perDay
-    def get_id(self):
+    def getId(self):
         return self.num
-    def get_books(self):
+    def getBooks(self):
         return self.books
-    def get_signup(self):
+    def getSignup(self):
         return self.signup
-    def get_perDay(self):
+    def getPerDay(self):
         return self.perDay
 
 def copy(sourceLibs):
@@ -65,7 +60,7 @@ def copy(sourceLibs):
         destLibs[i] = Library(sourceLibs[i].num, sourceLibs[i].books.copy(), sourceLibs[i].signup, sourceLibs[i].perDay)
     return destLibs
 
-def shuffle_all(libraries):
+def shuffleAll(libraries):
     random.shuffle(libraries)
     for library in libraries:
         random.shuffle(library.books)
@@ -78,7 +73,7 @@ def swap(array, tupla):
     array[tupla[0]] = array[tupla[1]]
     array[tupla[1]] = aux
 
-def random_tuple(maximum):
+def randomTuple(maximum):
     a = 0
     b = 0
     while a==b:
@@ -87,30 +82,24 @@ def random_tuple(maximum):
 
     return (a,b)    
 
-def generate_neighbour(libraries, prob_temp):
-    # balancear carga de swaps n_librerias vs. n_books
-    #p = random.random() 
-    #if p < 0.2:
-        #for n in noseke:
+def generateNeighbour(libraries, probTemp):
+    # TODO: balancear carga de swaps n_librerias vs. n_books
     for i in range(20):
-        swap(libraries, random_tuple(len(libraries)-1))
-    #else:
-        #for n in noseke:
+        swap(libraries, randomTuple(len(libraries)-1))
         selected = random.randint(0, len(libraries)-1)
-        swap(libraries[selected].books, random_tuple(len(libraries[selected].books)-1))
-        
+        swap(libraries[selected].books, randomTuple(len(libraries[selected].books)-1))
     return libraries
 
-def evaluate_solution(libraries, daysOfScanning, bookScores):
+def evaluateSolution(libraries, daysOfScanning, bookScores):
     score = 0
     day = 0
     scannedBooks = [False] * len(bookScores)
     
     for library in libraries:
-        signing = library.get_signup()
-        books = library.get_books()
+        signing = library.getSignup()
+        books = library.getBooks()
         
-        maxscan = library.get_perDay()*(daysOfScanning-day-signing)
+        maxscan = library.getPerDay()*(daysOfScanning-day-signing)
         if maxscan > len(books):
             maxscan = len(books)
         
@@ -133,42 +122,29 @@ def simulatedAnnealing(libraries, daysOfScanning, bookScores):
     T_end = 0.01
     
     current = []
-    best_found = []
+    bestFound = []
     current = copy(libraries)
-    best_found = copy(libraries)
-    
-    #current = libraries.copy()
-    #best_found = libraries.copy()
+    bestFound = copy(libraries)
 
     while T > T_end:
-        new = generate_neighbour(copy(current), 0)
-                
-        #print_libraries(new)
-        #print()
-        #print_libraries(current)
-        #print("#",evaluate_solution(new, daysOfScanning, bookScores), evaluate_solution(current, daysOfScanning, bookScores))
-        #print("-------")
+        new = generateNeighbour(copy(current), 0)
         
-        delta = float(evaluate_solution(new, daysOfScanning, bookScores) - evaluate_solution(current, daysOfScanning, bookScores))
+        delta = float(evaluateSolution(new, daysOfScanning, bookScores) - evaluateSolution(current, daysOfScanning, bookScores))
         
         if delta > 0:
             current = copy(new)
-            best_found = copy(current)
-            #current = new.copy()
-            #best_found = current.copy()
+            bestFound = copy(current)
         else:
             prob = math.exp(delta/T)
-            #print(delta, prob)
             if prob > random.random():
                 current = copy(new)
-                #current = new.copy()
 
         T = cooling(T)
 
-    return best_found
+    return bestFound
 
-assert_input()
-
+# INICIO
+assertInput()
 file = open(sys.argv[1], "r")
 
 numBooks, numLibraries, daysOfScanning = file.readline().split()
@@ -181,7 +157,7 @@ scores = list(map(int, scores))
 
 libraries = []
 
-for i_library in range(numLibraries):
+for iLibrary in range(numLibraries):
     libNumBooks, signupDelay, shipCapacity = file.readline().split()
     libNumBooks = int(libNumBooks)
     signupDelay = int(signupDelay)
@@ -189,16 +165,9 @@ for i_library in range(numLibraries):
     books = file.readline().split()
     books = list(map(int, books))
     
-    
-    # DEBUG
-    #print("numbooks:", libNumBooks)
-    #print("signup:", signupDelay)
-    #print("capacity:", shipCapacity)
-    #print("books:", books)
-    
-    libraries.append(Library(i_library, books, signupDelay, shipCapacity))
+    libraries.append(Library(iLibrary, books, signupDelay, shipCapacity))
 
-shuffle_all(libraries)
-best_solution = simulatedAnnealing(libraries, daysOfScanning, scores)
-print_libraries(best_solution)
+shuffleAll(libraries)
+bestSolution = simulatedAnnealing(libraries, daysOfScanning, scores)
+printOutput(bestSolution)
 
