@@ -68,14 +68,19 @@ def generate_random(libraries, numBooks, numLibraries, daysOfScanning):
     for i in range(numLibraries):
         individual.append(i)
 
+    random.shuffle(individual)
+
+    for lib in libraries:
+        random.shuffle(lib.books)
+
     return individual
 
 def cooling(T):
-    return 0.90*T
+    return 0.95*T
 
 def generate_neighbour(individual, dicc):
     p = random.random() 
-    if p >= 0.2:
+    if p < 0.2:
         a = 0
         b = 0
         while a==b:
@@ -114,7 +119,7 @@ def evaluate_solution(individual, daysOfScanning, dicc, libraries):
         else:
             aux_books = dicc[individual[ind_pointer]]
             signing = libraries[individual[ind_pointer]].get_signup()
-            acum += sum(aux_books[0:daysOfScanning-day_pointer])
+            acum += sum(aux_books[0:libraries[individual[ind_pointer]].get_perDay()*daysOfScanning-day_pointer])
             ind_pointer += 1
         day_pointer += 1
 
