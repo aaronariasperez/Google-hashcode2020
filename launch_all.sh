@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm "output/scores.txt"
 dir="data/*"
 
 for file in $dir
