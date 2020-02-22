@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import sys
-import os.path
+import os
 import math
 import random
 #import copy
@@ -176,7 +176,14 @@ for iLibrary in range(numLibraries):
     
     libraries.append(Library(iLibrary, books, signupDelay, shipCapacity))
 
+file.close()
+
 shuffleAll(libraries)
 bestSolution = simulatedAnnealing(libraries, daysOfScanning, bookScores)
 printOutput(bestSolution)
+
+file = open("output/scores.txt", "a")
+best = evaluateSolution(bestSolution, daysOfScanning, bookScores)
+file.write(str(best)+"\n")
+file.close()
 
