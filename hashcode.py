@@ -19,7 +19,7 @@ import sys
 import os.path
 import math
 import random
-import copy
+#import copy
 
 def assertInput():
      if len(sys.argv) < 2:
@@ -66,7 +66,7 @@ def shuffleAll(libraries):
         random.shuffle(library.books)
 
 def cooling(T):
-    return 0.9*T
+    return 0.95*T
 
 def swap(array, tupla):
     aux = array[tupla[0]]
@@ -82,12 +82,21 @@ def randomTuple(maximum):
 
     return (a,b)    
 
-def generateNeighbour(libraries, probTemp):
+def generateNeighbour(libraries, T):
     # TODO: balancear carga de swaps n_librerias vs. n_books
-    for i in range(20):
-        swap(libraries, randomTuple(len(libraries)-1))
-        selected = random.randint(0, len(libraries)-1)
-        swap(libraries[selected].books, randomTuple(len(libraries[selected].books)-1))
+    
+    p = 1 - math.exp(-T)
+    #print(p)
+    
+    for i in range(len(libraries)):
+        if p >= random.random():
+            swap(libraries, randomTuple(len(libraries)-1))
+    
+    selected = random.randint(0, len(libraries)-1)
+    for i in range(len(libraries[selected].books)):
+        if p >= random.random():
+            swap(libraries[selected].books, randomTuple(len(libraries[selected].books)-1))
+    
     return libraries
 
 def evaluateSolution(libraries, daysOfScanning, bookScores):
@@ -117,27 +126,27 @@ def evaluateSolution(libraries, daysOfScanning, bookScores):
     return score
 
 def simulatedAnnealing(libraries, daysOfScanning, bookScores):
-    T_max = 1000.0
     T = 1000.0
     T_end = 0.01
     
     current = []
     bestFound = []
     current = copy(libraries)
-    bestFound = copy(libraries)
+    bestFound = current
 
     while T > T_end:
-        new = generateNeighbour(copy(current), 0)
+        new = generateNeighbour(copy(current), T)
+        #print("generated...")
         
         delta = float(evaluateSolution(new, daysOfScanning, bookScores) - evaluateSolution(current, daysOfScanning, bookScores))
         
         if delta > 0:
-            current = copy(new)
-            bestFound = copy(current)
+            current = new
+            bestFound = current
         else:
             prob = math.exp(delta/T)
             if prob > random.random():
-                current = copy(new)
+                current = new
 
         T = cooling(T)
 
@@ -152,8 +161,8 @@ numBooks = int(numBooks)
 numLibraries = int(numLibraries)
 daysOfScanning = int(daysOfScanning)
 
-scores = file.readline().split()
-scores = list(map(int, scores))
+bookScores = file.readline().split()
+bookScores = list(map(int, bookScores))
 
 libraries = []
 
@@ -168,6 +177,6 @@ for iLibrary in range(numLibraries):
     libraries.append(Library(iLibrary, books, signupDelay, shipCapacity))
 
 shuffleAll(libraries)
-bestSolution = simulatedAnnealing(libraries, daysOfScanning, scores)
+bestSolution = simulatedAnnealing(libraries, daysOfScanning, bookScores)
 printOutput(bestSolution)
 
